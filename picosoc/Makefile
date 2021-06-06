@@ -1,6 +1,7 @@
 
-CROSS=riscv32-unknown-elf-
-CFLAGS=
+CROSS=riscv64-elf-
+CROSS_TOOLS=riscv32-elf-
+CFLAGS=-march=rv32imc -mabi=ilp32
 
 # ---- iCE40 HX8K Breakout Board ----
 
@@ -43,10 +44,10 @@ hx8kdemo_fw.elf: hx8kdemo_sections.lds start.s firmware.c
 	$(CROSS)gcc $(CFLAGS) -DHX8KDEMO -march=rv32imc -Wl,-Bstatic,-T,hx8kdemo_sections.lds,--strip-debug -ffreestanding -nostdlib -o hx8kdemo_fw.elf start.s firmware.c
 
 hx8kdemo_fw.hex: hx8kdemo_fw.elf
-	$(CROSS)objcopy -O verilog hx8kdemo_fw.elf hx8kdemo_fw.hex
+	$(CROSS_TOOLS)objcopy -O verilog hx8kdemo_fw.elf hx8kdemo_fw.hex
 
 hx8kdemo_fw.bin: hx8kdemo_fw.elf
-	$(CROSS)objcopy -O binary hx8kdemo_fw.elf hx8kdemo_fw.bin
+	$(CROSS_TOOLS)objcopy -O binary hx8kdemo_fw.elf hx8kdemo_fw.bin
 
 # ---- iCE40 IceBreaker Board ----
 
@@ -89,10 +90,10 @@ icebreaker_fw.elf: icebreaker_sections.lds start.s firmware.c
 	$(CROSS)gcc $(CFLAGS) -DICEBREAKER -march=rv32ic -Wl,-Bstatic,-T,icebreaker_sections.lds,--strip-debug -ffreestanding -nostdlib -o icebreaker_fw.elf start.s firmware.c
 
 icebreaker_fw.hex: icebreaker_fw.elf
-	$(CROSS)objcopy -O verilog icebreaker_fw.elf icebreaker_fw.hex
+	$(CROSS_TOOLS)objcopy -O verilog icebreaker_fw.elf icebreaker_fw.hex
 
 icebreaker_fw.bin: icebreaker_fw.elf
-	$(CROSS)objcopy -O binary icebreaker_fw.elf icebreaker_fw.bin
+	$(CROSS_TOOLS)objcopy -O binary icebreaker_fw.elf icebreaker_fw.bin
 
 # ---- Testbench for SPI Flash Model ----
 
