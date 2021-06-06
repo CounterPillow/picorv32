@@ -95,6 +95,48 @@ icebreaker_fw.hex: icebreaker_fw.elf
 icebreaker_fw.bin: icebreaker_fw.elf
 	$(CROSS_TOOLS)objcopy -O binary icebreaker_fw.elf icebreaker_fw.bin
 
+# ---- TinyFPGA BX ----
+
+tinyprog: tinyfpga.bin tinyfpga_fw.bin
+	tinyprog --libusb -p tinyfpga.bin -u tinyfpga_fw.bin
+
+tinysim: tinyfpga_tb.vvp tinyfpga_fw.hex
+	vvp -N $< +firmware=tinyfpga_fw.hex
+
+tinysynsim: tinyfpga_syn_tb.vvp tinyfpga_fw.hex
+	vvp -N $< +firmware=tinyfpga_fw.hex
+
+tinyfpga_tb.vvp: tinyfpga_tb.v tinyfpga.v ice40up5k_spram.v spimemio.v simpleuart.v picosoc.v ../picorv32.v spiflash.v
+	iverilog -s testbench -o $@ $^ `yosys-config --datdir/ice40/cells_sim.v`
+
+tinyfpga_syn_tb.vvp: tinyfpga_tb.v tinyfpga_syn.v spiflash.v
+	iverilog -s testbench -o $@ $^ `yosys-config --datdir/ice40/cells_sim.v`
+
+tinyfpga_syn.v: tinyfpga.json
+	yosys -p 'read_json tinyfpga.json; write_verilog tinyfpga_syn.v'
+
+tinyfpga.json: tinyfpga.v spimemio.v simpleuart.v picosoc.v ../picorv32.v
+	yosys -ql tinyfpga.log -p 'synth_ice40 -top tinyfpga -json tinyfpga.json' $^
+
+tinyfpga.asc: tinyfpga.pcf tinyfpga.json
+	nextpnr-ice40 --lp8k --package cm81 --asc tinyfpga.asc --pcf tinyfpga.pcf --json tinyfpga.json
+
+tinyfpga.bin: tinyfpga.asc
+	icetime -d hx8k -c 12 -mtr tinyfpga.rpt tinyfpga.asc
+	icepack tinyfpga.asc tinyfpga.bin
+
+tinyfpga_fw.elf: tinyfpga_sections.lds start.s firmware.c
+	$(CROSS)gcc $(CFLAGS) -DTINYFPGA -nostartfiles -Wl,-Bstatic,-T,tinyfpga_sections.lds,--strip-debug,-Map=tinyfpga_fw.map,--cref  -ffreestanding -nostdlib -o tinyfpga_fw.elf start.s firmware.c
+
+tinyfpga_fw.hex: tinyfpga_fw.elf
+	$(CROSS_TOOLS)objcopy -O verilog tinyfpga_fw.elf tinyfpga_fw.hex
+
+tinyfpga_fw.bin: tinyfpga_fw.elf
+	$(CROSS_TOOLS)objcopy -O binary tinyfpga_fw.elf /dev/stdout > tinyfpga_fw.bin
+
+tinyfpga_sections.lds: sections.lds
+	$(CROSS)cpp -P -DTINYFPGA -o $@ $^
+
 # ---- Testbench for SPI Flash Model ----
 
 spiflash_tb: spiflash_tb.vvp firmware.hex
@@ -118,6 +160,8 @@ clean:
 	rm -f hx8kdemo_syn.v hx8kdemo_syn_tb.vvp hx8kdemo_tb.vvp
 	rm -f icebreaker.json icebreaker.log icebreaker.asc icebreaker.rpt icebreaker.bin
 	rm -f icebreaker_syn.v icebreaker_syn_tb.vvp icebreaker_tb.vvp
+	rm -f tinyfpga.json tinyfpga.log tinyfpga.asc tinyfpga.rpt tinyfpga.bin
+	rm -f tinyfpga_fw.elf tinyfpga_fw.hex tinyfpga_fw.bin
 
 .PHONY: spiflash_tb clean
 .PHONY: hx8kprog hx8kprog_fw hx8ksim hx8ksynsim

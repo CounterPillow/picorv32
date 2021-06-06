@@ -24,6 +24,19 @@
 /icebreaker_fw.hex
 /icebreaker_fw.bin
 /icebreaker_sections.lds
+/tinyfpga.asc
+/tinyfpga.bin
+/tinyfpga.json
+/tinyfpga.log
+/tinyfpga.rpt
+/tinyfpga_syn.v
+/tinyfpga_syn_tb.vvp
+/tinyfpga_tb.vvp
+/tinyfpga_fw.elf
+/tinyfpga_fw.hex
+/tinyfpga_fw.bin
+/tinyfpga_fw.map
+/tinyfpga_sections.lds
 /testbench.vcd
 /cmos.log
 

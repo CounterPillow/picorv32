@@ -24,8 +24,10 @@
 #  define MEM_TOTAL 0x20000 /* 128 KB */
 #elif HX8KDEMO
 #  define MEM_TOTAL 0x200 /* 2 KB */
+#elif TINYFPGA
+#  define MEM_TOTAL 0x2000 /* 8 KB */
 #else
-#  error "Set -DICEBREAKER or -DHX8KDEMO when compiling firmware.c"
+#  error "Set -DICEBREAKER, -DHX8KDEMO or -DTINYFPGA when compiling firmware.c"
 #endif
 
 // a pointer to this is a null pointer, but the compiler does not
@@ -110,7 +112,7 @@ void set_flash_mode_qddr()
 }
 #endif
 
-#ifdef ICEBREAKER
+#if defined(ICEBREAKER) || defined(TINYFPGA)
 void set_flash_qspi_flag()
 {
 	uint8_t buffer[8];
@@ -386,7 +388,7 @@ void cmd_read_flash_regs()
 }
 #endif
 
-#ifdef ICEBREAKER
+#if defined(ICEBREAKER) || defined(TINYFPGA)
 uint8_t cmd_read_flash_reg(uint8_t cmd)
 {
 	uint8_t buffer[2] = {cmd, 0};
@@ -650,6 +652,18 @@ void cmd_benchmark_all()
 	print_hex(cmd_benchmark(false, &instns), 8);
 	putchar('\n');
 
+}
+#endif
+
+#ifdef TINYFPGA
+void cmd_benchmark_all()
+{
+	uint32_t instns = 0;
+
+	print("dual      ");
+	set_flash_mode_dual();
+	print_hex(cmd_benchmark(false, &instns), 8);
+	putchar('\n');
 }
 #endif
 
